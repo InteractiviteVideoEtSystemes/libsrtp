@@ -10,7 +10,7 @@
 
 /*
  *
- * Copyright (c) 2001-2006, Cisco Systems, Inc.
+ * Copyright (c) 2001-2017, Cisco Systems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,15 +48,22 @@
 #define SHA1_H
 
 #ifdef HAVE_CONFIG_H
-    #include <config.h>
+#include <config.h>
 #endif
 
 #include "err.h"
 #ifdef OPENSSL
 #include <openssl/evp.h>
 #include <stdint.h>
+#else
+#include "datatypes.h"
+#endif
 
-typedef EVP_MD_CTX srtp_sha1_ctx_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef OPENSSL
 
 /*
  * srtp_sha1_init(&ctx) initializes the SHA1 context ctx
@@ -72,25 +79,60 @@ typedef EVP_MD_CTX srtp_sha1_ctx_t;
  *
  */
 
-static inline void srtp_sha1_init (srtp_sha1_ctx_t *ctx)
+/* OpenSSL 1.1.0 made EVP_MD_CTX an opaque structure, which must be allocated
+   using EVP_MD_CTX_new. But this function doesn't exist in OpenSSL 1.0.x. */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+typedef EVP_MD_CTX srtp_sha1_ctx_t;
+
+static inline void srtp_sha1_init(srtp_sha1_ctx_t *ctx)
 {
     EVP_MD_CTX_init(ctx);
     EVP_DigestInit(ctx, EVP_sha1());
 }
 
-static inline void srtp_sha1_update (srtp_sha1_ctx_t *ctx, const uint8_t *M, int octets_in_msg)
+static inline void srtp_sha1_update(srtp_sha1_ctx_t *ctx,
+                                    const uint8_t *M,
+                                    int octets_in_msg)
 {
     EVP_DigestUpdate(ctx, M, octets_in_msg);
 }
 
-static inline void srtp_sha1_final (srtp_sha1_ctx_t *ctx, uint32_t *output)
+static inline void srtp_sha1_final(srtp_sha1_ctx_t *ctx, uint32_t *output)
 {
     unsigned int len = 0;
 
-    EVP_DigestFinal(ctx, (unsigned char*)output, &len);
+    EVP_DigestFinal(ctx, (unsigned char *)output, &len);
+    EVP_MD_CTX_cleanup(ctx);
 }
+
 #else
-#include "datatypes.h"
+
+typedef EVP_MD_CTX *srtp_sha1_ctx_t;
+
+static inline void srtp_sha1_init(srtp_sha1_ctx_t *ctx)
+{
+    *ctx = EVP_MD_CTX_new();
+    EVP_DigestInit(*ctx, EVP_sha1());
+}
+
+static inline void srtp_sha1_update(srtp_sha1_ctx_t *ctx,
+                                    const uint8_t *M,
+                                    int octets_in_msg)
+{
+    EVP_DigestUpdate(*ctx, M, octets_in_msg);
+}
+
+static inline void srtp_sha1_final(srtp_sha1_ctx_t *ctx, uint32_t *output)
+{
+    unsigned int len = 0;
+
+    EVP_DigestFinal(*ctx, (unsigned char *)output, &len);
+    EVP_MD_CTX_free(*ctx);
+}
+#endif
+
+#else
 
 typedef struct {
     uint32_t H[5];            /* state vector                    */
@@ -98,7 +140,6 @@ typedef struct {
     int octets_in_buffer;     /* octets of message in buffer     */
     uint32_t num_bits_in_msg; /* total number of bits in message */
 } srtp_sha1_ctx_t;
-
 
 /*
  * srtp_sha1_init(&ctx) initializes the SHA1 context ctx
@@ -112,9 +153,11 @@ typedef struct {
  */
 void srtp_sha1_init(srtp_sha1_ctx_t *ctx);
 
-void srtp_sha1_update(srtp_sha1_ctx_t *ctx, const uint8_t *M, int octets_in_msg);
+void srtp_sha1_update(srtp_sha1_ctx_t *ctx,
+                      const uint8_t *M,
+                      int octets_in_msg);
 
-void srtp_sha1_final(srtp_sha1_ctx_t * ctx, uint32_t output[5]);
+void srtp_sha1_final(srtp_sha1_ctx_t *ctx, uint32_t output[5]);
 
 /*
  * The srtp_sha1_core function is INTERNAL to SHA-1, but it is declared
@@ -133,5 +176,9 @@ void srtp_sha1_final(srtp_sha1_ctx_t * ctx, uint32_t output[5]);
 void srtp_sha1_core(const uint32_t M[16], uint32_t hash_value[5]);
 
 #endif /* else OPENSSL */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SHA1_H */

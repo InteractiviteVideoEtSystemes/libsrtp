@@ -8,7 +8,7 @@
 
 /*
  *
- * Copyright (c) 2001-2006, Cisco Systems, Inc.
+ * Copyright (c) 2001-2017, Cisco Systems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,10 @@
 
 #include "auth.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     char foo;
 } srtp_null_auth_ctx_t;
@@ -60,6 +64,10 @@ srtp_err_status_t srtp_null_auth_init(srtp_null_auth_ctx_t *state, const uint8_t
 
 srtp_err_status_t srtp_null_auth_compute(srtp_null_auth_ctx_t *state, uint8_t *message, int msg_octets, int tag_len, uint8_t *result);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* NULL_AUTH_H */

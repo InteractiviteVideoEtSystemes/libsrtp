@@ -8,7 +8,7 @@
  */
 /*
  *
- * Copyright(c) 2001-2006 Cisco Systems, Inc.
+ * Copyright(c) 2001-2017 Cisco Systems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,6 @@
  *
  */
 
-
 #ifndef CRYPTO_KERNEL
 #define CRYPTO_KERNEL
 
@@ -51,6 +50,10 @@
 #include "err.h"
 #include "crypto_types.h"
 #include "key.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * crypto_kernel_state_t defines the possible states:
@@ -68,7 +71,7 @@ typedef enum {
  */
 typedef struct srtp_kernel_cipher_type {
     srtp_cipher_type_id_t id;
-    const srtp_cipher_type_t    *cipher_type;
+    const srtp_cipher_type_t *cipher_type;
     struct srtp_kernel_cipher_type *next;
 } srtp_kernel_cipher_type_t;
 
@@ -77,7 +80,7 @@ typedef struct srtp_kernel_cipher_type {
  */
 typedef struct srtp_kernel_auth_type {
     srtp_auth_type_id_t id;
-    const srtp_auth_type_t    *auth_type;
+    const srtp_auth_type_t *auth_type;
     struct srtp_kernel_auth_type *next;
 } srtp_kernel_auth_type_t;
 
@@ -89,7 +92,6 @@ typedef struct srtp_kernel_debug_module {
     struct srtp_kernel_debug_module *next;
 } srtp_kernel_debug_module_t;
 
-
 /*
  * crypto_kernel_t is the data structure for the crypto kernel
  *
@@ -97,17 +99,16 @@ typedef struct srtp_kernel_debug_module {
  * a global variable defined in crypto_kernel.c
  */
 typedef struct {
-    srtp_crypto_kernel_state_t state;              /* current state of kernel     */
-    srtp_kernel_cipher_type_t *cipher_type_list;   /* list of all cipher types    */
-    srtp_kernel_auth_type_t   *auth_type_list;     /* list of all auth func types */
-    srtp_kernel_debug_module_t *debug_module_list; /* list of all debug modules   */
+    srtp_crypto_kernel_state_t state; /* current state of kernel     */
+    srtp_kernel_cipher_type_t *cipher_type_list; /* list of all cipher types */
+    srtp_kernel_auth_type_t *auth_type_list; /* list of all auth func types */
+    srtp_kernel_debug_module_t
+        *debug_module_list; /* list of all debug modules   */
 } srtp_crypto_kernel_t;
-
 
 /*
  * srtp_crypto_kernel_t external api
  */
-
 
 /*
  * The function srtp_crypto_kernel_init() initialized the crypto kernel and
@@ -121,7 +122,6 @@ typedef struct {
  * crypto_kernel MUST NOT be used.
  */
 srtp_err_status_t srtp_crypto_kernel_init(void);
-
 
 /*
  * The function srtp_crypto_kernel_shutdown() de-initializes the
@@ -146,7 +146,6 @@ srtp_err_status_t srtp_crypto_kernel_shutdown(void);
  */
 srtp_err_status_t srtp_crypto_kernel_status(void);
 
-
 /*
  * srtp_crypto_kernel_list_debug_modules() outputs a list of debugging modules
  *
@@ -157,31 +156,15 @@ srtp_err_status_t srtp_crypto_kernel_list_debug_modules(void);
  * srtp_crypto_kernel_load_cipher_type()
  *
  */
-srtp_err_status_t srtp_crypto_kernel_load_cipher_type(const srtp_cipher_type_t *ct, srtp_cipher_type_id_t id);
+srtp_err_status_t srtp_crypto_kernel_load_cipher_type(
+    const srtp_cipher_type_t *ct,
+    srtp_cipher_type_id_t id);
 
-srtp_err_status_t srtp_crypto_kernel_load_auth_type(const srtp_auth_type_t *ct, srtp_auth_type_id_t id);
+srtp_err_status_t srtp_crypto_kernel_load_auth_type(const srtp_auth_type_t *ct,
+                                                    srtp_auth_type_id_t id);
 
-/*
- * srtp_crypto_kernel_replace_cipher_type(ct, id)
- *
- * replaces the crypto kernel's existing cipher for the cipher_type id
- * with a new one passed in externally.  The new cipher must pass all the
- * existing cipher_type's self tests as well as its own.
- */
-srtp_err_status_t srtp_crypto_kernel_replace_cipher_type(const srtp_cipher_type_t *ct, srtp_cipher_type_id_t id);
-
-
-/*
- * srtp_crypto_kernel_replace_auth_type(ct, id)
- *
- * replaces the crypto kernel's existing cipher for the auth_type id
- * with a new one passed in externally.  The new auth type must pass all the
- * existing auth_type's self tests as well as its own.
- */
-srtp_err_status_t srtp_crypto_kernel_replace_auth_type(const srtp_auth_type_t *ct, srtp_auth_type_id_t id);
-
-
-srtp_err_status_t srtp_crypto_kernel_load_debug_module(srtp_debug_module_t *new_dm);
+srtp_err_status_t srtp_crypto_kernel_load_debug_module(
+    srtp_debug_module_t *new_dm);
 
 /*
  * srtp_crypto_kernel_alloc_cipher(id, cp, key_len);
@@ -193,7 +176,10 @@ srtp_err_status_t srtp_crypto_kernel_load_debug_module(srtp_debug_module_t *new_
  *    srtp_err_status_alloc_fail   an allocation failure occured
  *    srtp_err_status_fail         couldn't find cipher with identifier 'id'
  */
-srtp_err_status_t srtp_crypto_kernel_alloc_cipher(srtp_cipher_type_id_t id, srtp_cipher_pointer_t *cp, int key_len, int tag_len);
+srtp_err_status_t srtp_crypto_kernel_alloc_cipher(srtp_cipher_type_id_t id,
+                                                  srtp_cipher_pointer_t *cp,
+                                                  int key_len,
+                                                  int tag_len);
 
 /*
  * srtp_crypto_kernel_alloc_auth(id, ap, key_len, tag_len);
@@ -206,8 +192,10 @@ srtp_err_status_t srtp_crypto_kernel_alloc_cipher(srtp_cipher_type_id_t id, srtp
  *    srtp_err_status_alloc_fail   an allocation failure occured
  *    srtp_err_status_fail         couldn't find auth with identifier 'id'
  */
-srtp_err_status_t srtp_crypto_kernel_alloc_auth(srtp_auth_type_id_t id, auth_pointer_t *ap, int key_len, int tag_len);
-
+srtp_err_status_t srtp_crypto_kernel_alloc_auth(srtp_auth_type_id_t id,
+                                                srtp_auth_pointer_t *ap,
+                                                int key_len,
+                                                int tag_len);
 
 /*
  * srtp_crypto_kernel_set_debug_module(mod_name, v)
@@ -217,6 +205,11 @@ srtp_err_status_t srtp_crypto_kernel_alloc_auth(srtp_auth_type_id_t id, auth_poi
  *
  * returns srtp_err_status_ok on success, srtp_err_status_fail otherwise
  */
-srtp_err_status_t srtp_crypto_kernel_set_debug_module(char *mod_name, int v);
+srtp_err_status_t srtp_crypto_kernel_set_debug_module(const char *mod_name,
+                                                      int v);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CRYPTO_KERNEL */
